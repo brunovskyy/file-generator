@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from document_creator import render_template_from_url  # Import your function
+from scripts.document_creator import render_template_from_url  # Import your function
 
 app = FastAPI()
 

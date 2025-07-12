@@ -6,18 +6,29 @@ import os
 from docx2pdf import convert
 from input_parser import parse_input_data
 
+# Import docxtpl for advanced templating
+from docxtpl import DocxTemplate
+
 # === CONFIGURABLE INPUT PARAMETERS ===
 
 # Public URL to the Word .docx template
-TEMPLATE_URL = "https://zazsgfgfbnhymwnbuwvq.supabase.co/storage/v1/object/sign/document-templates/TEST%20Order%20Form%20-%20DASA%202025.docx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xMDJjODcxNy1mMGFiLTQzYmMtOTdiNy1kNzViYjZiODdkMjEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkb2N1bWVudC10ZW1wbGF0ZXMvVEVTVCBPcmRlciBGb3JtIC0gREFTQSAyMDI1LmRvY3giLCJpYXQiOjE3NTIwNzg1MzEsImV4cCI6MTc1MjY4MzMzMX0.dzYaZ6WPMvVxW3UC_khMhUlFr4Lq4pBhrFXXbRARR-c"
+TEMPLATE_URL = "https://zazsgfgfbnhymwnbuwvq.supabase.co/storage/v1/object/sign/document-templates/wowow.docx?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV8xMDJjODcxNy1mMGFiLTQzYmMtOTdiNy1kNzViYjZiODdkMjEiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJkb2N1bWVudC10ZW1wbGF0ZXMvd293b3cuZG9jeCIsImlhdCI6MTc1MjIwMzQ5NSwiZXhwIjoxNzUyODA4Mjk1fQ.DAj1t6IrjhXVxXGpp_11ADb3QwDD24R0B7X2u4EWyPo"
+
 # Dictionary of variable placeholders and their replacement values
 DOCUMENT_VARIABLE_VALUES = [{
     "name": "Pineda Industries",
-    "description": "Bruno Pineda"
+    "description": "Bruno Pineda",
+    "products": [
+        {"product_name": "Widget A", "price": 100},
+        {"product_name": "Widget B", "price": 200}
+    ]
 },
 {
     "name": "Tech Solutions",
-    "description": "Alice Johnson"
+    "description": "Alice Johnson",
+    "products": [
+        {"product_name": "Widget C", "price": 300}
+    ]
 }]
 # Delimiters used in the Word template (e.g., {{company_name}})
 OPENING_DELIMITER = "{{"
@@ -27,14 +38,13 @@ OUTPUT_EXTENSION = "pdf"
 
 # === MAIN FUNCTION ===
 
-print("File is being executed")
-
 def render_template_from_url(
     template_url: str,
     placeholders: dict,
     opening_delimiter: str = "{{",
     closing_delimiter: str = "}}",
-    output_extension: str = "docx"  # Can be "docx" or "pdf"
+    output_extension: str = "docx",  # Can be "docx" or "pdf"
+    use_docxtpl: bool = True         # Switch between python-docx and docxtpl
 ) -> bytes:
     """
     Downloads a Word template from a URL, replaces all placeholders using the provided values,
@@ -46,6 +56,7 @@ def render_template_from_url(
         opening_delimiter (str): Start tag for placeholders (e.g., '{{').
         closing_delimiter (str): End tag for placeholders (e.g., '}}').
         output_extension (str): Desired output format: 'pdf' or 'docx'.
+        use_docxtpl (bool): If True, use docxtpl for advanced templating (supports loops).
 
     Returns:
         bytes: The rendered file in the chosen format (to be saved, returned via API, etc.)
@@ -53,109 +64,90 @@ def render_template_from_url(
     # Step 1: Download the Word .docx file from the URL
     print("Starting template download...")
     template_response = requests.get(template_url)
-    
-    # Return Fetch Status Code for Debugging
     print(f"Download response status code: {template_response.status_code}")
 
-    # Download Failure
     if template_response.status_code != 200:
         raise Exception(f"Error downloading template. Status code: {template_response.status_code}")
 
-    # Download Success
     print("Template downloaded successfully.")
 
     # Step 2: Create a temporary folder to work in
-    # This ensures that all intermediate files are cleaned up automatically.
     with tempfile.TemporaryDirectory() as temporary_folder_path:
         print(f"Temporary folder created at: {temporary_folder_path}")
 
-        ## Save Downloaded File
-        # Construct the full path for the downloaded template within the temporary folder.
         downloaded_template_path = os.path.join(temporary_folder_path, "template.docx")
-        # Write the content of the downloaded template to the specified path in binary write mode.
         with open(downloaded_template_path, "wb") as template_file:
             template_file.write(template_response.content)
         print(f"Template saved to: {downloaded_template_path}")
 
-        # Step 3: Load the .docx file into memory
-        # Use the python-docx library to open and parse the Word document.
-        document = Document(downloaded_template_path)
-        print("Template loaded into Document object.")
+        # Step 3: Render the template using docxtpl or python-docx
+        if use_docxtpl:
+            # --- DOCXTPL LOGIC ---
+            # Load the template with DocxTemplate
+            doc = DocxTemplate(downloaded_template_path)
+            print("Template loaded into DocxTemplate object.")
 
-        # Step 4: Replace placeholders in each paragraph
-        replaced_any = False
-        # Iterate through each paragraph in the document to find and replace placeholders.
-        for paragraph in document.paragraphs:
-            # Iterate through each key-value pair provided in the placeholders dictionary.
-            for key, value in placeholders.items():
-                # Construct the placeholder pattern using the specified delimiters.
-                placeholder_pattern = f"{opening_delimiter}{key}{closing_delimiter}"
-                # Check if the current paragraph's text contains the placeholder pattern.
-                if placeholder_pattern in paragraph.text:
-                    print(f"Replacing placeholder '{placeholder_pattern}' with '{value}' in paragraph: '{paragraph.text}'")
-                    # Replace all occurrences of the placeholder with its corresponding value.
-                    paragraph.text = paragraph.text.replace(placeholder_pattern, value)
-                    replaced_any = True
+            # Render the template with the provided context (supports loops and conditionals)
+            doc.render(placeholders)
+            print("Template rendered with docxtpl.")
 
-        # Inform if no placeholders were found and replaced.
-        if not replaced_any:
-            print("No placeholders were replaced in the document.")
+            # Save the rendered document
+            updated_docx_path = os.path.join(temporary_folder_path, "updated_output.docx")
+            doc.save(updated_docx_path)
+            print(f"Rendered document saved at: {updated_docx_path}")
 
-        # Step 5: Save the updated .docx file
-        # Construct the path for the modified document within the temporary folder.
-        updated_docx_path = os.path.join(temporary_folder_path, "updated_output.docx")
-        # Save the modified Document object back to a .docx file.
-        document.save(updated_docx_path)
-        print(f"Updated document saved at: {updated_docx_path}")
+        else:
+            # --- PYTHON-DOCX LOGIC (simple variable replacement only) ---
+            document = Document(downloaded_template_path)
+            print("Template loaded into Document object.")
 
-        # Step 6: Return as PDF or DOCX
-        # Check the desired output format specified by the user.
+            replaced_any = False
+            for paragraph in document.paragraphs:
+                for key, value in placeholders.items():
+                    placeholder_pattern = f"{opening_delimiter}{key}{closing_delimiter}"
+                    if placeholder_pattern in paragraph.text:
+                        print(f"Replacing placeholder '{placeholder_pattern}' with '{value}' in paragraph: '{paragraph.text}'")
+                        paragraph.text = paragraph.text.replace(placeholder_pattern, str(value))
+                        replaced_any = True
+
+            if not replaced_any:
+                print("No placeholders were replaced in the document.")
+
+            updated_docx_path = os.path.join(temporary_folder_path, "updated_output.docx")
+            document.save(updated_docx_path)
+            print(f"Updated document saved at: {updated_docx_path}")
+
+        # Step 4: Return as PDF or DOCX
         if output_extension == "pdf":
-            # Convert to PDF using docx2pdf
-            # Construct the path for the output PDF file.
             output_pdf_path = os.path.join(temporary_folder_path, "final_output.pdf")
             print("Starting conversion to PDF...")
-            # Use the docx2pdf library to convert the updated DOCX to PDF.
             convert(updated_docx_path, output_pdf_path)
             print(f"PDF generated at: {output_pdf_path}")
 
-            # Read PDF file as bytes
-            # Open the generated PDF file in binary read mode.
             with open(output_pdf_path, "rb") as final_pdf_file:
-                # Read the entire content of the PDF file into a bytes object.
                 pdf_bytes = final_pdf_file.read()
             print("PDF read into memory.")
-            # Return the PDF content as bytes.
             return pdf_bytes
 
         elif output_extension == "docx":
-            # Read updated DOCX file as bytes
-            # Open the updated DOCX file in binary read mode.
             with open(updated_docx_path, "rb") as final_docx_file:
-                # Read the entire content of the DOCX file into a bytes object.
                 docx_bytes = final_docx_file.read()
             print("DOCX read into memory.")
-            # Return the DOCX content as bytes.
             return docx_bytes
 
         else:
-            # Raise an error if an unsupported output extension is provided.
             raise ValueError("Invalid output_extension. Must be 'pdf' or 'docx'.")
-
 
 # === TESTING / EXAMPLE USAGE ===
 
-# This block executes only when the script is run directly (not imported as a module).
 if __name__ == "__main__":
     print("Running main example usage...")
 
     try:
-        # Validate output extension
         if OUTPUT_EXTENSION not in ("pdf", "docx"):
             raise ValueError("OUTPUT_EXTENSION must be 'pdf' or 'docx'.")
 
-        # Process input data (can be dict, list of dicts, or csv file)
-        data_list = parse_input_data(DOCUMENT_VARIABLE_VALUES)  # Set DOCUMENT_VARIABLE_VALUES with your input data
+        data_list = parse_input_data(DOCUMENT_VARIABLE_VALUES)
 
         OUTPUT_DIR = "./output"
         os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -166,10 +158,10 @@ if __name__ == "__main__":
                 placeholders=placeholders,
                 opening_delimiter=OPENING_DELIMITER,
                 closing_delimiter=CLOSING_DELIMITER,
-                output_extension=OUTPUT_EXTENSION
+                output_extension=OUTPUT_EXTENSION,
+                use_docxtpl=True  # Set to False to use python-docx logic
             )
 
-            # Generate a unique filename
             base_filename = f"generated_output_{idx+1}.{OUTPUT_EXTENSION}" if len(data_list) > 1 else f"generated_output.{OUTPUT_EXTENSION}"
             output_filename = os.path.join(OUTPUT_DIR, base_filename)
             file_counter = 1
