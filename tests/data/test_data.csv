@@ -1,0 +1,3 @@
+name,email,profile.age,profile.location,department,projects
+John Doe,john@example.com,30,New York,Engineering,"[{""name"": ""Project A"", ""status"": ""completed""}, {""name"": ""Project B"", ""status"": ""in-progress""}]"
+Jane Smith,jane@example.com,25,San Francisco,Design,"[{""name"": ""Project C"", ""status"": ""completed""}, {""name"": ""Project D"", ""status"": ""planning""}]"

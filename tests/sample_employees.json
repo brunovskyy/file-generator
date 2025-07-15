@@ -1,0 +1,101 @@
+[
+  {
+    "id": 1,
+    "name": "Alice Johnson",
+    "email": "alice@example.com",
+    "department": "Engineering",
+    "profile": {
+      "age": 29,
+      "location": "San Francisco",
+      "skills": [
+        "Python",
+        "Machine Learning",
+        "Data Analysis"
+      ],
+      "experience_years": 5
+    },
+    "projects": [
+      {
+        "name": "ML Pipeline",
+        "status": "completed",
+        "priority": "high"
+      },
+      {
+        "name": "Data Visualization",
+        "status": "in-progress",
+        "priority": "medium"
+      }
+    ],
+    "performance": {
+      "rating": 4.5,
+      "goals_met": 8,
+      "total_goals": 10
+    }
+  },
+  {
+    "id": 2,
+    "name": "Bob Smith",
+    "email": "bob@example.com",
+    "department": "Marketing",
+    "profile": {
+      "age": 34,
+      "location": "New York",
+      "skills": [
+        "SEO",
+        "Content Marketing",
+        "Analytics"
+      ],
+      "experience_years": 8
+    },
+    "projects": [
+      {
+        "name": "Brand Campaign",
+        "status": "completed",
+        "priority": "high"
+      },
+      {
+        "name": "Social Media Strategy",
+        "status": "planning",
+        "priority": "low"
+      }
+    ],
+    "performance": {
+      "rating": 4.2,
+      "goals_met": 9,
+      "total_goals": 10
+    }
+  },
+  {
+    "id": 3,
+    "name": "Carol Davis",
+    "email": "carol@example.com",
+    "department": "Engineering",
+    "profile": {
+      "age": 26,
+      "location": "Austin",
+      "skills": [
+        "React",
+        "Node.js",
+        "DevOps"
+      ],
+      "experience_years": 3
+    },
+    "projects": [
+      {
+        "name": "Web App Redesign",
+        "status": "in-progress",
+        "priority": "high"
+      },
+      {
+        "name": "API Documentation",
+        "status": "completed",
+        "priority": "medium"
+      }
+    ],
+    "performance": {
+      "rating": 4.8,
+      "goals_met": 10,
+      "total_goals": 10
+    }
+  }
+]

@@ -1,0 +1,40 @@
+[
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "profile": {
+      "age": 30,
+      "location": "New York"
+    },
+    "department": "Engineering",
+    "projects": [
+      {
+        "name": "Project A",
+        "status": "completed"
+      },
+      {
+        "name": "Project B",
+        "status": "in-progress"
+      }
+    ]
+  },
+  {
+    "name": "Jane Smith",
+    "email": "jane@example.com",
+    "profile": {
+      "age": 25,
+      "location": "San Francisco"
+    },
+    "department": "Design",
+    "projects": [
+      {
+        "name": "Project C",
+        "status": "completed"
+      },
+      {
+        "name": "Project D",
+        "status": "planning"
+      }
+    ]
+  }
+]

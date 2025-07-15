@@ -1,0 +1,126 @@
+# Document Creator Toolkit - Requirements
+# ==========================================
+
+# Core Dependencies (Required)
+# ---------------------------
+# These are essential for the toolkit to function
+
+# Network requests for API data loading
+requests>=2.31.0
+
+# Optional Dependencies (Enhanced Features)
+# ----------------------------------------
+# These enhance functionality but are not required
+
+# YAML Support - for YAML front matter in Markdown
+# If not installed, falls back to JSON format
+PyYAML>=6.0.1
+
+# PDF Export - for generating PDF documents
+# If not installed, PDF export will be disabled
+reportlab>=4.0.4
+
+# Word Document Export - for generating Word documents
+# If not installed, Word export will be disabled
+python-docx>=0.8.11
+
+# Advanced Word Template Support - for template-based Word documents
+# Provides enhanced template processing capabilities
+docxtpl>=0.16.7
+
+# Word to PDF conversion (Windows/macOS only)
+# Optional for direct Word to PDF conversion
+docx2pdf>=0.1.8
+
+# Enhanced CLI features - colored output and better formatting
+colorama>=0.4.6
+
+# Development Dependencies (Optional)
+# ----------------------------------
+# These are useful for development and testing
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Code formatting and linting
+black>=23.7.0
+flake8>=6.0.0
+
+# Type checking
+mypy>=1.5.0
+
+# Documentation generation
+sphinx>=7.1.0
+
+# Installation Guide
+# -----------------
+# 
+# Minimal Installation (Core functionality only):
+# pip install requests
+# 
+# Standard Installation (Recommended):
+# pip install requests PyYAML reportlab python-docx docxtpl colorama
+# 
+# Full Installation (All features):
+# pip install -r requirements.txt
+# 
+# Individual Feature Installation:
+# pip install PyYAML          # For YAML support
+# pip install reportlab        # For PDF export
+# pip install python-docx     # For Word export
+# pip install docxtpl         # For Word templates
+# pip install colorama        # For colored CLI output
+# 
+# Dependency Information:
+# ----------------------
+# 
+# requests: HTTP library for API data loading
+#   - Used in: source_to_json.py
+#   - Purpose: Fetching data from URLs and APIs
+#   - Required: Yes
+#   - Status: ✅ Essential
+# 
+# PyYAML: YAML parsing and generation
+#   - Used in: markdown_export.py
+#   - Purpose: Creating YAML front matter in Markdown files
+#   - Required: No (falls back to JSON format)
+#   - Status: ⚠️ Optional but recommended
+# 
+# reportlab: PDF generation library
+#   - Used in: pdf_export.py
+#   - Purpose: Creating PDF documents from data
+#   - Required: No (PDF export disabled without it)
+#   - Status: ⚠️ Optional
+# 
+# python-docx: Word document manipulation
+#   - Used in: word_export.py
+#   - Purpose: Creating and editing Word documents
+#   - Required: No (Word export disabled without it)
+#   - Status: ⚠️ Optional
+# 
+# docxtpl: Word document templating
+#   - Used in: word_export.py
+#   - Purpose: Advanced template processing for Word documents
+#   - Required: No (basic Word export still works)
+#   - Status: 🔧 Enhancement
+# 
+# colorama: Cross-platform colored terminal output
+#   - Used in: CLI interface
+#   - Purpose: Colored output for better user experience
+#   - Required: No (CLI works without colors)
+#   - Status: 🎨 Enhancement
+# 
+# Compatibility:
+# -------------
+# Python 3.8+ required
+# Windows, macOS, Linux supported
+# 
+# Known Issues & Solutions:
+# ------------------------
+# - tkinter might not be available in some minimal Python installations
+#   Solution: Install tkinter via system package manager
+# - reportlab requires additional system libraries on some Linux distributions
+#   Solution: Install system dependencies or use conda
+# - python-docx has better support for .docx than .doc files
+#   Solution: Use .docx format for best compatibility
