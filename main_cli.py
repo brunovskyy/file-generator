@@ -190,11 +190,16 @@ def get_user_input_interactive() -> Dict[str, Any]:
     if output_choice.startswith("Use default"):
         config['output_dir'] = str(default_output)
     elif output_choice == "Browse for folder":
+        print("\n🔍 Opening folder selection dialog...")
+        print("💡 If no dialog appears, check that tkinter is installed and you're not in a headless environment.")
+        
         selected_folder = select_folder_with_dialog("Select Output Folder")
         if selected_folder:
+            print(f"✅ Selected folder: {selected_folder}")
             config['output_dir'] = selected_folder
         else:
-            print("No folder selected, using default.")
+            print("❌ No folder selected or dialog failed.")
+            print("💡 Falling back to default Downloads folder.")
             config['output_dir'] = str(default_output)
     else:
         config['output_dir'] = input("Enter output directory path: ").strip()

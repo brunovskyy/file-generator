@@ -445,20 +445,45 @@ def select_folder_with_dialog(title: str = "Select Output Folder") -> Optional[s
     Returns:
         Selected folder path or None if cancelled/failed
     """
+    print(f"🔍 [DEBUG] Attempting to open folder dialog: '{title}'")
+    
     try:
+        print("🔍 [DEBUG] Importing tkinter...")
         import tkinter as tk
         from tkinter import filedialog
+        print("🔍 [DEBUG] tkinter imported successfully")
         
+        print("🔍 [DEBUG] Creating tkinter root window...")
         root = tk.Tk()
-        root.withdraw()
+        root.withdraw()  # Hide the main window
+        print("🔍 [DEBUG] Root window created and hidden")
+        
+        print("🔍 [DEBUG] Opening folder dialog...")
         folder_path = filedialog.askdirectory(
             title=title,
             mustexist=False  # Allow selection of new folders
         )
-        root.destroy()
-        return folder_path if folder_path else None
         
+        print(f"🔍 [DEBUG] Dialog returned: '{folder_path}'")
+        
+        print("🔍 [DEBUG] Destroying root window...")
+        root.destroy()
+        
+        if folder_path:
+            print(f"✅ [SUCCESS] Folder selected: {folder_path}")
+            return folder_path
+        else:
+            print("ℹ️  [INFO] User cancelled folder selection")
+            return None
+        
+    except ImportError as e:
+        print(f"❌ [ERROR] tkinter not available: {e}")
+        print("💡 [HINT] Try: pip install tk")
+        logging.error(f"tkinter import failed: {e}")
+        return None
     except Exception as e:
+        print(f"❌ [ERROR] Unexpected error opening folder dialog: {e}")
+        print(f"🔍 [DEBUG] Error type: {type(e).__name__}")
         logging.error(f"Error opening folder dialog: {e}")
         return None
 
