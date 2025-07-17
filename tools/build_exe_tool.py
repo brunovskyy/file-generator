@@ -38,7 +38,7 @@ def main():
         "--name", "DocGenius",
         "--onefile",  # Single executable file
         "--clean",
-        "--windowed",  # No console window
+        # "--windowed",  # No console window - REMOVED for debugging
     ]
     
     # Add icon if available
@@ -48,15 +48,43 @@ def main():
     else:
         print("⚠️ No icon file found. Create assets/icon.ico for custom icon.")
     
-    # Add hidden imports for dependencies that might not be detected
+    # Add hidden imports for ALL dependencies required by DocGenius
     hidden_imports = [
+        # Core package modules
         "docgenius",
         "docgenius.core",
         "docgenius.cli", 
         "docgenius.logic",
         "docgenius.compat",
+        
+        # GUI components
         "tkinter",
-        "tkinter.filedialog"
+        "tkinter.filedialog",
+        
+        # HTTP requests (data loading) - REQUIRED
+        'requests', 'urllib3', 'certifi', 'charset_normalizer', 'idna',
+        
+        # YAML support (document metadata) - REQUIRED
+        'yaml', 'PyYAML',
+        
+        # PDF export (CORE FEATURE) - REQUIRED
+        'reportlab', 'reportlab.pdfgen', 'reportlab.lib', 'reportlab.platypus',
+        'reportlab.graphics', 'reportlab.pdfbase', 'pillow', 'PIL',
+        
+        # Word document support (CORE FEATURE) - REQUIRED
+        'docx', 'python-docx', 'lxml', 'lxml.etree', 'lxml.objectify',
+        
+        # Word templates (CORE FEATURE) - REQUIRED
+        'docxtpl', 'jinja2', 'docxcompose', 'babel',
+        
+        # CLI enhancements
+        'colorama',
+        
+        # Windows COM support
+        'win32com.client', 'pythoncom', 'pywintypes',
+        
+        # Standard library essentials
+        'typing_extensions', 'setuptools', 'six', 'MarkupSafe'
     ]
     
     for import_name in hidden_imports:

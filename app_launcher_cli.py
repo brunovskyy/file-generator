@@ -38,19 +38,28 @@ try:
         return MessageDialogs.show_yes_no("Confirm", message)
 except ImportError as e:
     print(f"❌ Import error: {e}")
-    print("💡 Running dependency check...")
     
-    # Try to import and run dependency installer
-    try:
-        from tools import deps_installer_tool
-        deps_installer_tool.main()
-        print("✅ Dependencies installed. Please restart the application.")
-        input("Press Enter to exit...")
-        sys.exit(0)
-    except ImportError:
-        print("❌ Could not find dependency installer. Please run: python install_deps.py")
+    # Check if we're running as a bundled executable
+    if getattr(sys, 'frozen', False):
+        print("❌ Missing dependencies in bundled executable!")
+        print("💡 This appears to be a packaging issue. Please report this bug.")
+        print("🔧 Try downloading a fresh copy of the application.")
         input("Press Enter to exit...")
         sys.exit(1)
+    else:
+        print("💡 Running dependency check...")
+        
+        # Try to import and run dependency installer
+        try:
+            from tools import deps_installer_tool
+            deps_installer_tool.main()
+            print("✅ Dependencies installed. Please restart the application.")
+            input("Press Enter to exit...")
+            sys.exit(0)
+        except ImportError:
+            print("❌ Could not find dependency installer. Please run: python install_deps.py")
+            input("Press Enter to exit...")
+            sys.exit(1)
 
 
 class DocGeniusApp:
