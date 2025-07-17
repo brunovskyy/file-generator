@@ -67,9 +67,10 @@ Mike Johnson,Sales,55000,2023-03-10
 | Jane Doe | Marketing | $65,000 | 2023-02-20 |
 | Mike Johnson | Sales | $55,000 | 2023-03-10 |
 
-## Statistics
-- Average Salary: $65,000
-- Departments: Engineering, Marketing, Sales
+## Export Statistics
+- Unique Data Fields: 4
+- Successfully Processed: 3 records
+- Export Format: Markdown
 ```
 
 #### 2. Converting JSON Data to PDF Report
@@ -97,8 +98,8 @@ Mike Johnson,Sales,55000,2023-03-10
 **Expected Output**: A professional PDF report with:
 - Header with quarter information
 - Formatted tables showing sales data
-- Summary statistics and charts
-- Professional styling and branding
+- Export metadata and processing information
+- Professional styling and document structure
 
 #### 3. Batch Processing Multiple Files
 **What you need**: Multiple CSV/JSON files in a folder
@@ -112,10 +113,10 @@ Mike Johnson,Sales,55000,2023-03-10
 6. Let DocGenius process all files automatically
 
 **Use Cases**:
-- Monthly sales reports → Professional PDF summaries
+- Monthly sales reports → Professional PDF document formatting
 - Employee data → Formatted team directories
 - Inventory lists → Searchable markdown catalogs
-- Survey results → Statistical analysis reports
+- Survey results → Structured data reports
 
 ### Common File Types Supported
 
@@ -305,7 +306,7 @@ python tools/build_exe_tool.py --windowed       # GUI-only (no console)
 - **Word Documents**: Editable reports, collaborative documents
 
 ### 🎯 Perfect For
-- **Business Reports**: Transform sales data into executive summaries
+- **Business Reports**: Transform sales data into formatted business documents
 - **Data Documentation**: Convert datasets into readable documentation
 - **Team Updates**: Create formatted reports from project data
 - **Academic Work**: Convert research data into formatted papers
