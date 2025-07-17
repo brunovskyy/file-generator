@@ -21,7 +21,7 @@ setup(
     name="docgenius",
     version="2.1.0",
     author="Bruno Pineda", 
-    author_email="bruno@docgenius.dev",
+    author_email="",
     description="Professional document generation toolkit with modular, extensible architecture",
     long_description=long_description,
     long_description_content_type="text/markdown",
