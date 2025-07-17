@@ -144,23 +144,65 @@ DocGenius uses a clean, modular architecture with clear separation of concerns:
 ```
 📁 Project Structure
 ├── 📄 app_launcher_cli.py        # Main application launcher
-├── 📁 docgenius/                 # Core package
+├── � README.md                  # This documentation
+├── 📄 requirements.txt           # Python dependencies
+├── 📄 setup.py                   # Package configuration
+├── 📄 .gitignore                 # Git ignore rules
+├── �📁 docgenius/                 # Core package
 │   ├── 📁 cli/                   # Command-line interfaces
 │   │   ├── dev_tools.py          # Developer tools
 │   │   └── system_tools.py       # System management
-│   ├── � core/                  # Core functionality
+│   ├── 📁 core/                  # Core functionality
 │   │   └── document_creator.py   # Main document creation engine
 │   ├── 📁 logic/                 # Business logic modules
-│   │   ├── � data_sources/      # Input handlers (CSV, JSON, API)
+│   │   ├── 📁 data_sources/      # Input handlers (CSV, JSON, API)
 │   │   ├── 📁 exporters/         # Output generators (MD, PDF, Word)
-│   │   ├── � models/            # Data structures and validation
+│   │   ├── 📁 models/            # Data structures and validation
 │   │   └── 📁 utilities/         # Supporting functions
-│   └── � compat/                # Backward compatibility
+│   └── 📁 compat/                # Backward compatibility
 ├── 📁 tools/                     # Development and build tools
+│   ├── build_exe_tool.py         # EXE builder (PyInstaller)
+│   ├── deps_installer_tool.py    # Dependency installer
+│   └── setup_installer_tool.py   # Environment setup
 ├── 📁 tests/                     # Comprehensive test suite
 ├── 📁 assets/                    # Examples and static resources
-└── 📁 build/                     # Build artifacts and executables
+└── 📁 release/                   # 🚀 GitHub release files (EXE, docs)
 ```
+
+### 📂 Folder Structure Explained
+
+#### Root Directory (Clean & Minimal)
+- **app_launcher_cli.py**: Main entry point for the application
+- **README.md**: Documentation (this file)
+- **requirements.txt**: All Python dependencies needed
+- **setup.py**: Package metadata and installation config
+- **.gitignore**: Prevents temporary files from being committed
+
+#### Core Package (`docgenius/`)
+- **📁 cli/**: Command-line interfaces for different user types
+- **📁 core/**: Main document creation engine and orchestration
+- **📁 logic/**: All business logic organized by functionality
+- **📁 compat/**: Backward compatibility for legacy features
+
+#### Development (`tools/`)
+- **build_exe_tool.py**: Builds standalone EXE files using PyInstaller
+- **deps_installer_tool.py**: Installs required dependencies automatically
+- **setup_installer_tool.py**: Complete development environment setup
+
+#### Testing & Assets
+- **📁 tests/**: Unit tests, integration tests, and test data
+- **📁 assets/**: Example files, documentation, and static resources
+
+#### Release Distribution (`release/`)
+- **DocGenius-Console.exe**: Standalone console version (39MB, all dependencies included)
+- **DocGenius.exe**: GUI version (if available)
+- **SECURITY_INSTRUCTIONS.md**: Windows security warnings and solutions
+- **Release notes and documentation**
+
+#### Temporary/Ignored Folders
+- **build/**: PyInstaller temporary files (gitignored, auto-deleted)
+- **dist/**: PyInstaller output folder (gitignored, files moved to release/)
+- **__pycache__/**: Python bytecode cache (gitignored)
 
 ### Advanced Usage & API
 
