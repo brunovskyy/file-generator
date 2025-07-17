@@ -2,6 +2,8 @@
 
 A powerful, modular toolkit for converting data sources (CSV, JSON, APIs) into beautifully formatted documents (Markdown, PDF, Word).
 
+**Author**: https://github.com/brunovskyy/
+
 ## 🚀 Quick Start
 
 ### Installation
