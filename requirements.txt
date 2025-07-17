@@ -35,6 +35,9 @@ docx2pdf>=0.1.8
 # Enhanced CLI features - colored output and better formatting
 colorama>=0.4.6
 
+# EXE Generation - for creating standalone executables
+pyinstaller>=5.13.0
+
 # Development Dependencies (Optional)
 # ----------------------------------
 # These are useful for development and testing

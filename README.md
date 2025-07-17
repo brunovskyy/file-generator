@@ -1,340 +1,169 @@
-# Document Creator Toolkit
+# DocGenius - Document Creator Toolkit 📄
 
-A modular Python toolkit for converting data sources (CSV, JSON, APIs) into various document formats (Markdown, PDF, Word). Supports both interactive and argument-based CLI usage with advanced features like YAML front matter key selection for Markdown exports.
+A powerful, modular toolkit for converting data sources (CSV, JSON, APIs) into beautifully formatted documents (Markdown, PDF, Word).
 
-## Features
-
-✅ **Multi-format Data Loading**: CSV, JSON, and API endpoints  
-✅ **Multiple Export Formats**: Markdown, PDF, Word documents  
-✅ **Interactive CLI**: User-friendly prompts and file selection  
-✅ **Argument-based CLI**: Scriptable command-line interface  
-✅ **YAML Front Matter**: Interactive key selection for Markdown exports  
-✅ **Template Support**: Word/PDF generation from templates  
-✅ **Modular Design**: Clean, extensible architecture  
-✅ **Error Handling**: Comprehensive error reporting and validation  
-✅ **Downloads Folder Default**: Automatically saves to user's Downloads folder  
-✅ **Folder Selection Dialog**: GUI folder picker for output directory  
-
-## Quick Start
+## 🚀 Quick Start
 
 ### Installation
-
 ```bash
-# Clone or download the project
-cd "PY Document Creator"
-
 # Install dependencies
-pip install -r requirements.txt
+python tools/install_deps.py
+
+# Or run full setup
+python tools/setup.py
 ```
 
-### Interactive Mode
-
+### Basic Usage
 ```bash
-python main_cli.py
+# Launch the interactive menu
+python app.py
+
+# Or use the document creator directly
+python document_creator.py --input data.csv --output report.md --format markdown
 ```
 
-The interactive mode will guide you through:
-1. **Data Source Selection**: Choose file, URL, or API endpoint
-2. **Export Format Selection**: Select from Markdown, PDF, Word
-3. **Output Configuration**: Set output directory and options with GUI folder picker
-4. **YAML Key Selection**: Interactive tree view for Markdown front matter (if enabled)
+## 🏗️ Architecture
 
-**Default Output**: Files are saved to your Downloads folder in timestamped subdirectories.
-
-### Command Line Mode
-
-```bash
-# Basic usage
-python main_cli.py --source data.json --export-types markdown pdf
-
-# Advanced usage with all options
-python main_cli.py \
-  --source https://api.example.com/data \
-  --export-types markdown word \
-  --output-dir ./exports \
-  --yaml-front-matter \
-  --yaml-key-selection select \
-  --filename-key name \
-  --verbose
-```
-
-## Project Structure
+DocGenius uses a clean, modular architecture:
 
 ```
-PY Document Creator/
-├── json_to_file/                 # Core toolkit modules
-│   ├── __init__.py              # Package initialization
-│   ├── source_to_json.py        # Data loading and normalization
-│   ├── markdown_export.py       # Markdown export with YAML front matter
-│   ├── pdf_export.py           # PDF export (direct and template-based)
-│   ├── word_export.py          # Word export (direct and template-based)
-│   └── utils.py                 # Shared utility functions
-├── main_cli.py                  # Unified CLI entry point
-├── tests/                       # Comprehensive test suite
-├── requirements.txt             # Project dependencies
-├── README.md                    # This file
-└── output/                      # Default output directory (legacy)
+📁 Project Structure
+├── 📄 app.py                    # Main launcher with menu system
+├── 📄 document_creator.py       # Core document creation functionality  
+├── 📄 dev_tools.py             # Developer tools interface
+├── 📄 system_tools.py          # System management tools
+├── 📄 compat.py                # Backward compatibility layer
+├── 📁 logic/                   # Core business logic
+│   ├── 📁 models/              # Data structures and validation
+│   ├── 📁 data_sources/        # Input loading (CSV, JSON, APIs)
+│   ├── 📁 exporters/           # Document generation (MD, PDF, Word)
+│   └── 📁 utilities/           # Supporting functions
+├── 📁 assets/                  # Static assets and examples
+│   └── 📁 examples/            # Usage examples and demos
+├── 📁 tools/                   # Development and build tools
+├── 📁 tests/                   # Test suite
+└── 📁 dev_logs/               # Development session logs
 ```
 
-**Note**: The default output directory is now `~/Downloads/` for better user experience.
-
-## Usage Examples
+## 🎯 Features
 
 ### Data Sources
-
-**Local Files:**
-```bash
-python main_cli.py --source data.csv --export-types markdown
-python main_cli.py --source data.json --export-types pdf word
-```
-
-**URLs:**
-```bash
-python main_cli.py --source https://example.com/data.json --export-types markdown
-```
-
-**APIs:**
-```bash
-python main_cli.py --source https://api.example.com/users --export-types markdown pdf
-```
+- **CSV Files**: Advanced parsing with custom delimiters, encoding detection
+- **JSON Files**: Nested object support with flattening options
+- **APIs**: RESTful API integration with authentication
+- **Validation**: Comprehensive data validation and error handling
 
 ### Export Formats
+- **Markdown**: YAML front matter, custom templates, table formatting
+- **PDF**: Professional formatting, headers/footers, custom styling
+- **Word**: Template support, styling, metadata integration
 
-**Markdown with YAML Front Matter:**
+### Utilities
+- **File Operations**: Backup management, temporary files, path validation
+- **GUI Dialogs**: File selection, progress tracking, user interaction
+- **Validation**: Data integrity, business logic, file format validation
+- **Configuration**: Environment management, settings persistence
+- **Logging**: Session tracking, performance monitoring, error reporting
+- **System Tools**: Dependency checking, environment detection
+
+## 📋 Usage Examples
+
+### Command Line Interface
 ```bash
-python main_cli.py --source data.json --export-types markdown --yaml-front-matter --yaml-key-selection select
+# Interactive mode
+python app.py
+
+# Direct export
+python document_creator.py --input employees.csv --output report.md --format markdown
+
+# With template
+python document_creator.py --input data.json --output document.pdf --format pdf --template custom.template
 ```
 
-**PDF (requires reportlab):**
+### Python API
+```python
+from logic.data_sources import CSVLoader
+from logic.exporters import MarkdownExporter
+from logic.models import DataObject, DocumentConfig
+
+# Load data
+loader = CSVLoader()
+result = loader.load('employees.csv')
+
+# Export to markdown
+exporter = MarkdownExporter()
+data_obj = DataObject(result.data)
+config = DocumentConfig(output_path='employees.md')
+
+export_result = exporter.export(data_obj, config)
+```
+
+## 🛠️ Development Tools
+
+Located in the `tools/` directory:
+
+- **`install_deps.py`**: Quick dependency installation
+- **`setup.py`**: Complete development environment setup
+- **`run_tests.py`**: Comprehensive test runner
+- **`build_exe.py`**: Standalone executable builder
+
+## 🧪 Testing
+
 ```bash
-python main_cli.py --source data.csv --export-types pdf
+# Run all tests
+python tools/run_tests.py
+
+# Run specific test module
+python -m pytest tests/test_markdown_export.py
+
+# Run with coverage
+python tools/run_tests.py --coverage
 ```
 
-**Word Documents (requires python-docx):**
+## 📦 Building Executable
+
 ```bash
-python main_cli.py --source data.json --export-types word
+# Build standalone EXE
+python tools/build_exe.py
+
+# The executable will be created in dist/DocGenius.exe
 ```
 
-**Multiple Formats:**
-```bash
-python main_cli.py --source data.json --export-types markdown pdf word
-```
+## 🔧 Configuration
 
-## Advanced Features
+DocGenius supports various configuration options:
 
-### YAML Front Matter Key Selection
+- **Environment files**: `.env` support for settings
+- **Configuration files**: JSON/YAML configuration files  
+- **Command line options**: Override any setting via CLI
+- **Interactive setup**: Guided configuration through menus
 
-For Markdown exports, the toolkit provides an interactive tree view to select which keys should be included in the YAML front matter:
+## 📚 Examples
 
-```
-==================================================
-YAML FRONT MATTER KEY SELECTION
-==================================================
+Check the `assets/examples/` directory for:
+- **`demo_toolkit.py`**: Comprehensive feature demonstration
+- Sample data files and templates
+- Usage patterns and best practices
 
-Available keys in your data:
- 1. name                           (e.g., John Doe)
- 2. email                          (e.g., john@example.com)
- 3. profile.age                    (e.g., 30)
- 4. profile.location               (e.g., New York)
- 5. skills                         (e.g., ['Python', 'JavaScript'])
+## 🤝 Contributing
 
-Selection options:
-  - Enter numbers separated by spaces (e.g., 1 3 5)
-  - Enter 'all' to select all keys
-  - Enter 'none' to skip YAML front matter
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `python tools/run_tests.py`
+5. Submit a pull request
 
-Enter your selection: 1 2 3
-```
+## 📄 License
 
-### Template-Based Exports
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-The toolkit supports template-based document generation for Word and PDF formats:
+## 🆘 Support
 
-```python
-from json_to_file.word_export import export_to_word
-
-# Using a template URL
-export_to_word(
-    data_list,
-    output_directory="./output",
-    template_url="https://example.com/template.docx",
-    use_template=True
-)
-```
-
-### API Integration
-
-Load data from APIs with custom headers and parameters:
-
-```python
-from json_to_file.source_to_json import load_normalized_data
-
-data = load_normalized_data(
-    source_path_or_url="https://api.example.com/data",
-    file_format="api",
-    api_method="GET",
-    api_headers={"Authorization": "Bearer token"},
-    api_query={"limit": 100}
-)
-```
-
-## Dependencies
-
-### Core Dependencies
-- `requests`: HTTP requests for APIs and URLs
-- `pathlib`: Modern path handling (built-in)
-- `json`, `csv`: Data format support (built-in)
-
-### Optional Dependencies
-- `PyYAML`: Enhanced YAML front matter support
-- `reportlab`: Direct PDF generation
-- `python-docx`: Word document creation
-- `docxtpl`: Advanced Word templating
-- `docx2pdf`: Word to PDF conversion
-
-Install all dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-Or install selectively:
-```bash
-# For basic functionality
-pip install requests
-
-# For Markdown with YAML
-pip install PyYAML
-
-# For PDF export
-pip install reportlab
-
-# For Word export
-pip install python-docx docxtpl docx2pdf
-```
-
-## API Reference
-
-### Data Loading
-
-```python
-from json_to_file.source_to_json import load_normalized_data
-
-# Load from any source
-data = load_normalized_data(
-    source_path_or_url="data.json",
-    file_format="json",  # auto-detected if None
-    encoding="utf-8",
-    api_method="GET",
-    api_headers={"Authorization": "Bearer token"},
-    api_query={"limit": 100}
-)
-```
-
-### Markdown Export
-
-```python
-from json_to_file.markdown_export import export_to_markdown
-
-files = export_to_markdown(
-    data_list=data,
-    output_directory="./output",
-    filename_key="name",
-    include_yaml_front_matter=True,
-    selected_yaml_keys={"name", "email", "profile.age"},
-    flatten_yaml_values=True
-)
-```
-
-### PDF Export
-
-```python
-from json_to_file.pdf_export import export_to_pdf
-
-files = export_to_pdf(
-    data_list=data,
-    output_directory="./output",
-    filename_key="name",
-    template_url="https://example.com/template.docx",
-    use_template=True
-)
-```
-
-### Word Export
-
-```python
-from json_to_file.word_export import export_to_word
-
-files = export_to_word(
-    data_list=data,
-    output_directory="./output",
-    filename_key="name",
-    template_path="./template.docx",
-    use_template=True
-)
-```
-
-## Error Handling
-
-The toolkit provides comprehensive error handling with custom exceptions:
-
-```python
-from json_to_file import (
-    DataSourceError,
-    MarkdownExportError,
-    PDFExportError,
-    WordExportError
-)
-
-try:
-    data = load_normalized_data("invalid_source.json")
-except DataSourceError as e:
-    print(f"Data loading failed: {e}")
-
-try:
-    export_to_pdf(data, "./output")
-except PDFExportError as e:
-    print(f"PDF export failed: {e}")
-```
-
-## Extending the Toolkit
-
-### Adding New Data Sources
-
-1. Extend `source_to_json.py` with new format detection
-2. Add loading logic for the new format
-3. Update the CLI to support the new source type
-
-### Adding New Export Formats
-
-1. Create a new module in `json_to_file/` (e.g., `excel_export.py`)
-2. Implement the export function following the existing pattern
-3. Add the new format to the CLI choices
-4. Update the main CLI to handle the new format
-
-### Example: Adding Excel Export
-
-```python
-# json_to_file/excel_export.py
-def export_to_excel(data_list, output_directory, **kwargs):
-    """Export data to Excel format."""
-    # Implementation here
-    pass
-```
-
-Then update `main_cli.py` to include 'excel' in the export choices.
-
-## Contributing
-
-1. Follow the existing code structure and patterns
-2. Add comprehensive docstrings to all functions
-3. Include error handling with custom exceptions
-4. Update this README with new features
-5. Test with various data sources and formats
-
-## License
-
-This project is provided as-is for educational and development purposes.
+- Check the examples in `assets/examples/`
+- Review the development logs in `dev_logs/`
+- Run the dependency checker: `python tools/install_deps.py`
+- Use the interactive help: `python app.py` and select help options
 
 ---
 
-**Need help?** Check the docstrings in each module or run `python main_cli.py --help` for usage information.
+**DocGenius** - Transforming data into documents with elegance and efficiency. 🎨✨
