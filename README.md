@@ -42,7 +42,7 @@ DocGenius uses a clean, modular architecture:
 │   └── 📁 examples/            # Usage examples and demos
 ├── 📁 tools/                   # Development and build tools
 ├── 📁 tests/                   # Test suite
-└── 📁 dev_logs/               # Development session logs
+└── 📁 .dev/                   # Development files and logs
 ```
 
 ## 🎯 Features
@@ -160,7 +160,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ## 🆘 Support
 
 - Check the examples in `assets/examples/`
-- Review the development logs in `dev_logs/`
+- Review the development logs in `.dev/logs/`
 - Run the dependency checker: `python tools/install_deps.py`
 - Use the interactive help: `python app.py` and select help options
 

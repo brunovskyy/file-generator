@@ -309,17 +309,17 @@ class DevToolsInterface:
         """View development logs."""
         print("\n📋 Development Logs")
         
-        logs_dir = self.project_root / "dev_logs"
+        logs_dir = self.project_root / ".dev" / "logs"
         
         if not logs_dir.exists():
-            print("❌ dev_logs directory not found")
+            print("❌ .dev/logs directory not found")
             input("Press Enter to continue...")
             return
         
         log_files = list(logs_dir.glob("*.md"))
         
         if not log_files:
-            print("❌ No log files found in dev_logs/")
+            print("❌ No log files found in .dev/logs/")
             input("Press Enter to continue...")
             return
         
@@ -396,7 +396,7 @@ class DevToolsInterface:
             report.append(f"❌ Error getting recent logs: {e}\n")
         
         # Save report
-        report_path = self.project_root / "dev_logs" / f"dev_report_{self._get_timestamp_for_filename()}.md"
+        report_path = self.project_root / ".dev" / "logs" / f"dev_report_{self._get_timestamp_for_filename()}.md"
         
         try:
             report_path.parent.mkdir(exist_ok=True)
@@ -593,7 +593,7 @@ class DevToolsInterface:
         """Get recent development logs."""
         logs = []
         
-        logs_dir = self.project_root / "dev_logs"
+        logs_dir = self.project_root / ".dev" / "logs"
         if logs_dir.exists():
             log_files = sorted(logs_dir.glob("*.md"), 
                              key=lambda x: x.stat().st_mtime, reverse=True)
