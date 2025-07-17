@@ -12,11 +12,11 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-# Import toolkit modules from new logic structure
-from logic.data_sources import CSVLoader, LoadResult
-from logic.exporters import MarkdownExporter, PDFExporter, WordExporter, ExportResult
-from logic.models import DataObject, DocumentConfig, ExportSettings
-from logic.utilities import (
+# Import toolkit modules from new package structure
+from ..logic.data_sources import CSVLoader, LoadResult
+from ..logic.exporters import MarkdownExporter, PDFExporter, WordExporter, ExportResult
+from ..logic.models import DataObject, DocumentConfig, ExportSettings
+from ..logic.utilities import (
     FileDialogs, MessageDialogs, DialogResult,
     ValidationEngine, FileOperations,
     LoggingConfigurator, SessionLogger

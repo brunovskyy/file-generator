@@ -50,12 +50,11 @@ def main():
     
     # Add hidden imports for dependencies that might not be detected
     hidden_imports = [
-        "json_to_file",
-        "json_to_file.source_to_json",
-        "json_to_file.markdown_export", 
-        "json_to_file.pdf_export",
-        "json_to_file.word_export",
-        "json_to_file.utils",
+        "docgenius",
+        "docgenius.core",
+        "docgenius.cli", 
+        "docgenius.logic",
+        "docgenius.compat",
         "tkinter",
         "tkinter.filedialog"
     ]

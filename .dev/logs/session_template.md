@@ -2,6 +2,7 @@
 **Date:** [YYYY-MM-DD]  
 **Session Type:** [Bug Fix | Feature Enhancement | Refactoring | Documentation]  
 **Status:** [🔄 In Progress | ✅ Completed | ⚠️ Blocked]  
+**Issue**" [Just a number or identificator that helps understand where the sequence of the daily logs specific (maybe more than 1 in one day)]
 
 ---
 

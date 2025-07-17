@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 try:
-    # Import from new logic structure
-    from logic.utilities import MessageDialogs
+    # Import from new package structure
+    from ..logic.utilities import MessageDialogs
     
     # Backward compatibility functions
     def yes_no_prompt(message: str) -> bool:

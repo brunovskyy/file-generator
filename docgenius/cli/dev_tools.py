@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 try:
-    # Import from new logic structure
-    from logic.utilities import (
+    # Import from new package structure
+    from ..logic.utilities import (
         MessageDialogs, FileDialogs, DialogResult,
         LoggingConfigurator, SessionLogger,
         ValidationEngine

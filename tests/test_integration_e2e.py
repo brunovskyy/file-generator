@@ -14,9 +14,9 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 # Import main CLI functionality
-from document_creator_core import main
+from docgenius.core.document_creator import main
 # Import from compatibility layer
-from legacy_compat_layer import (
+from docgenius.compat.legacy import (
     load_normalized_data,
     export_to_markdown,
     setup_logging,

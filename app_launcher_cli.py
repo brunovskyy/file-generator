@@ -14,14 +14,14 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 try:
-    # Import from new logic structure
-    from logic.utilities import (
+    # Import from new package structure
+    from docgenius.logic.utilities import (
         DialogResult, FileDialogs, MessageDialogs, 
         LoggingConfigurator, SessionLogger
     )
-    from document_creator_core import main as document_creator_main
-    from dev_tools_cli import DevToolsInterface
-    from system_tools_cli import SystemToolsInterface
+    from docgenius.core.document_creator import main as document_creator_main
+    from docgenius.cli.dev_tools import DevToolsInterface
+    from docgenius.cli.system_tools import SystemToolsInterface
     
     # Backward compatibility utilities
     def setup_logging(log_level='INFO'):

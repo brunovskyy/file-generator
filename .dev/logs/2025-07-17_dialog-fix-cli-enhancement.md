@@ -89,7 +89,7 @@ This session focused on fixing critical issues with the Document Creator CLI too
 
 ### Files Created:
 1. **`install_deps.py`** - Automated dependency installer
-2. **`dev_logs/`** - Directory for development session logs
+2. **`.dev/logs/`** - Directory for development session logs
 
 ---
 
@@ -195,7 +195,7 @@ file-generator/
 │   ├── word_export.py       # Word document generation
 │   └── utils.py             # Shared utilities
 ├── tests/                   # Test suite
-├── dev_logs/                # Development session logs
+├── .dev/logs/               # Development session logs
 ├── requirements.txt         # Python dependencies
 └── README.md               # Project documentation
 ```

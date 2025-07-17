@@ -54,7 +54,7 @@
 │   ├── 📄 build_exe.py         # Executable builder
 │   └── 📄 README.md            # Tools documentation
 ├── 📁 tests/                   # ✅ Test suite - KEEP
-├── 📁 dev_logs/               # ✅ Development logs - KEEP
+├── 📁 .dev/logs/              # ✅ Development logs - KEEP
 ├── 📁 .venv/                  # ✅ Virtual environment - KEEP
 └── 📁 .git/                   # ✅ Git repository - KEEP
 ```
