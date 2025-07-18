@@ -9,6 +9,7 @@ data sources (CSV, JSON, APIs) to various document formats.
 import argparse
 import sys
 import logging
+import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
@@ -34,10 +35,26 @@ def load_normalized_data(file_path: str, source_type: str = None):
             else:
                 raise DataSourceError(f"Failed to load CSV: {'; '.join(result.errors)}")
         else:
-            # Handle other formats as needed
+            # Handle JSON and other formats
             import json
             with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                content = f.read()
+                if not content.strip():
+                    raise DataSourceError(f"File is empty: {file_path}")
+                return json.loads(content)
+    except json.JSONDecodeError as e:
+        # Provide helpful JSON error messages
+        error_msg = f"Invalid JSON format in {file_path}:\n"
+        error_msg += f"Error at line {e.lineno}, column {e.colno}: {e.msg}\n"
+        error_msg += "💡 Common fixes:\n"
+        error_msg += "  - Check for missing quotes around property names\n"
+        error_msg += "  - Check for trailing commas\n"
+        error_msg += "  - Validate JSON format at jsonlint.com"
+        raise DataSourceError(error_msg)
+    except FileNotFoundError:
+        raise DataSourceError(f"File not found: {file_path}")
+    except PermissionError:
+        raise DataSourceError(f"Permission denied accessing: {file_path}")
     except Exception as e:
         raise DataSourceError(f"Failed to load data from {file_path}: {str(e)}")
 
@@ -91,9 +108,79 @@ def export_to_word(data, output_path: str, **kwargs):
     except Exception as e:
         raise WordExportError(f"Word export error: {str(e)}")
 
-def interactive_yaml_key_selection(*args, **kwargs):
-    """Backward compatibility function for YAML key selection."""
-    return None  # Simplified for now
+def interactive_yaml_key_selection(sample_data: Dict[str, Any], all_keys: List[str]) -> Dict[str, Any]:
+    """
+    Interactive YAML key selection with live preview.
+    
+    Args:
+        sample_data: Sample data object to show previews
+        all_keys: All available keys from the data
+        
+    Returns:
+        Dictionary with selection configuration:
+        - mode: 'all', 'select', 'flatten', 'none', or 'exit'
+        - selected_keys: List of selected keys
+        - flatten_nested: Boolean for flattening nested objects
+    """
+    try:
+        from ..cli.enhanced_ui import EnhancedCLI, YAMLKeySelector
+        
+        cli = EnhancedCLI()
+        selector = YAMLKeySelector(cli)
+        
+        # Show current data preview
+        cli.format_info("Sample data preview:")
+        print(json.dumps(sample_data, indent=2)[:500] + "..." if len(str(sample_data)) > 500 else json.dumps(sample_data, indent=2))
+        
+        return selector.select_keys_interactive(sample_data, all_keys)
+        
+    except ImportError:
+        # Fallback to basic selection if enhanced UI is not available
+        print("\n🔧 Enhanced UI not available, using basic selection...")
+        return _basic_yaml_key_selection(sample_data, all_keys)
+
+
+def _basic_yaml_key_selection(sample_data: Dict[str, Any], all_keys: List[str]) -> Dict[str, Any]:
+    """Basic fallback YAML key selection without enhanced UI."""
+    print("\n📋 Available keys in your data:")
+    for i, key in enumerate(all_keys, 1):
+        value = sample_data.get(key, "N/A")
+        preview = str(value)[:50] + "..." if len(str(value)) > 50 else str(value)
+        print(f"  {i}. {key}: {preview}")
+    
+    while True:
+        choice = input(f"\nSelect keys (e.g., 1,3,5 for specific keys or 'all' for all keys): ").strip().lower()
+        
+        if choice == 'all':
+            return {
+                "mode": "all",
+                "selected_keys": all_keys,
+                "flatten_nested": False
+            }
+        elif choice == 'none':
+            return {
+                "mode": "none", 
+                "selected_keys": [],
+                "flatten_nested": False
+            }
+        
+        try:
+            # Parse specific key selection
+            indices = [int(x.strip()) - 1 for x in choice.split(',')]
+            selected_keys = [all_keys[i] for i in indices if 0 <= i < len(all_keys)]
+            
+            if selected_keys:
+                return {
+                    "mode": "select",
+                    "selected_keys": selected_keys,
+                    "flatten_nested": False
+                }
+            else:
+                print("❌ No valid keys selected. Please try again.")
+                
+        except (ValueError, IndexError):
+            print("❌ Invalid input. Use numbers separated by commas (e.g., 1,3,5) or 'all'.")
+            continue
 
 def check_pdf_requirements():
     """Check PDF export requirements."""
@@ -115,10 +202,10 @@ def get_word_missing_requirements():
     """Get missing Word requirements.""" 
     return []
 
-def setup_logging():
+def setup_logging(log_level='INFO'):
     """Setup logging using new utilities structure."""
     configurator = LoggingConfigurator()
-    return configurator.setup_application_logging(log_level='INFO')
+    return configurator.setup_application_logging(log_level=log_level)
 
 def generate_transaction_id():
     """Generate transaction ID."""
@@ -129,18 +216,72 @@ def get_default_output_directory():
     """Get default output directory."""
     return str(Path.cwd() / 'output')
 
-def yes_no_prompt(message: str) -> bool:
+def yes_no_prompt(message: str, default: bool = True) -> bool:
     """Yes/no prompt using new dialog utilities."""
-    return MessageDialogs.show_yes_no("Confirm", message)
+    dialogs = MessageDialogs()
+    result = dialogs.confirm("Confirm", message)
+    return result.value if result.success else default
 
-def prompt_user_choice(message: str, choices: list) -> str:
+def prompt_user_choice(message: str, choices: list, default: str = None) -> str:
     """Prompt user for choice."""
-    return MessageDialogs.show_choice("Select Option", message, choices)
+    print(f"\n{message}")
+    for i, choice in enumerate(choices, 1):
+        marker = " (default)" if choice == default else ""
+        print(f"{i}. {choice}{marker}")
+    
+    while True:
+        try:
+            user_input = input(f"\nChoose 1-{len(choices)} (or 'help'/'back'): ").strip()
+            
+            if user_input.lower() == 'help':
+                print("\nValid commands:")
+                print("- Type a number (1-{}) to select an option".format(len(choices)))
+                print("- Type 'help' to see this message")
+                print("- Type 'back' to return to previous step")
+                continue
+            elif user_input.lower() == 'back':
+                return "back"
+            
+            choice_index = int(user_input) - 1
+            if 0 <= choice_index < len(choices):
+                return choices[choice_index]
+            else:
+                print(f"❌ Invalid option. Please choose 1-{len(choices)}.")
+        except ValueError:
+            print(f"❌ Please enter a number (1-{len(choices)}) or 'help'/'back'.")
+        except KeyboardInterrupt:
+            return "back"
 
-def select_folder_with_dialog() -> Optional[str]:
-    """Select folder with dialog."""
-    result = FileDialogs.select_directory("Select Output Directory")
-    return result.selected_path if result.success else None
+def select_folder_with_dialog(title: str = "Select Output Directory") -> Optional[str]:
+    """Select folder with dialog using direct tkinter."""
+    print(f"Opening folder selection dialog...")
+    try:
+        import tkinter as tk
+        from tkinter import filedialog
+        
+        # Create a temporary root window
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        root.attributes('-topmost', True)  # Bring to front
+        
+        # Open folder dialog
+        folder_path = filedialog.askdirectory(
+            title=title
+        )
+        
+        root.destroy()  # Clean up
+        
+        if folder_path:
+            print(f"Selected folder: {folder_path}")
+            return folder_path
+        else:
+            print("No folder selected.")
+            return None
+            
+    except Exception as e:
+        print(f"❌ Folder dialog failed: {e}")
+        print("Please enter folder path manually instead.")
+        return None
 
 # Exception classes for backward compatibility
 class DataSourceError(Exception):
@@ -166,32 +307,43 @@ class DocumentCreatorError(Exception):
 
 def select_file_with_dialog() -> Optional[str]:
     """
-    Open a file selection dialog using new dialog utilities.
+    Open a file selection dialog using direct tkinter.
     
     Returns:
         Selected file path or None if cancelled/failed
     """
     print("Opening file selection dialog...")
     try:
-        result = FileDialogs.select_file(
+        import tkinter as tk
+        from tkinter import filedialog
+        
+        # Create a temporary root window
+        root = tk.Tk()
+        root.withdraw()  # Hide the root window
+        root.attributes('-topmost', True)  # Bring to front
+        
+        # Open file dialog
+        file_path = filedialog.askopenfilename(
             title="Select your data file",
-            file_types=[
+            filetypes=[
                 ("JSON files", "*.json"),
                 ("CSV files", "*.csv"), 
                 ("All files", "*.*")
             ]
         )
         
-        if result.success and result.selected_path:
-            print(f"Selected file: {result.selected_path}")
-            return result.selected_path
+        root.destroy()  # Clean up
+        
+        if file_path:
+            print(f"Selected file: {file_path}")
+            return file_path
         else:
             print("No file selected.")
             return None
             
     except Exception as e:
-        print(f"❌ Error opening file dialog: {e}")
-        logging.error(f"Error opening file dialog: {e}")
+        print(f"❌ File dialog failed: {e}")
+        print("Please enter file path manually instead.")
         return None
 
 
@@ -250,10 +402,630 @@ def show_input_help(step_name: str, options: List[str] = None) -> None:
 def get_user_input_with_navigation() -> Dict[str, Any]:
     """
     Get user input with enhanced navigation and error handling.
+    Uses enhanced CLI with arrow key navigation when available.
     
     Returns:
         Dictionary containing user configuration
     """
+    try:
+        from ..cli.enhanced_ui import EnhancedCLI
+        
+        cli = EnhancedCLI()
+        cli.show_banner()
+        
+        # Use enhanced navigation
+        return _get_input_with_enhanced_ui(cli)
+        
+    except ImportError:
+        # Fallback to basic CLI
+        print("\n🔧 Enhanced UI not available, using basic interface...")
+        return _get_input_basic_ui()
+
+
+def _get_input_with_enhanced_ui(cli) -> Dict[str, Any]:
+    """Enhanced UI flow with unified step navigation and dynamic step calculation."""
+    try:
+        from ..cli.step_manager import StepManager
+        
+        step_manager = StepManager()
+        config = {}
+        current_step_key = "data_source"
+        
+        while True:
+            # Update current step in config for progress tracking
+            config['current_step'] = current_step_key
+            
+            # Get current step information
+            step_num, total_steps, step_title = step_manager.get_step_progress(current_step_key, config)
+            
+            # Show progress
+            cli.show_step_progress(step_title, total_steps, step_num)
+            
+            # Execute the current step
+            step_result = None
+            
+            if current_step_key == "data_source":
+                step_result = _step_data_source(cli, config)
+            elif current_step_key == "template_selection":
+                step_result = _step_template_selection(cli, config)
+            elif current_step_key == "export_formats":
+                step_result = _step_export_formats(cli, config)
+            elif current_step_key == "output_directory":
+                step_result = _step_output_directory(cli, config)
+            elif current_step_key == "markdown_config":
+                step_result = _step_markdown_config(cli, config)
+            elif current_step_key == "markdown_yaml_keys":
+                step_result = _step_markdown_yaml_keys(cli, config)
+            elif current_step_key == "pdf_config":
+                step_result = _step_pdf_config(cli, config)
+            elif current_step_key == "word_config":
+                step_result = _step_word_config(cli, config)
+            elif current_step_key == "template_variables":
+                step_result = _step_template_variables(cli, config)
+            elif current_step_key == "final_review":
+                step_result = _step_final_review(cli, config)
+            else:
+                cli.format_error(f"Unknown step: {current_step_key}")
+                return None
+            
+            # Handle step result
+            if step_result is None:
+                return None  # User wants to exit
+            elif step_result.get('action') == 'back':
+                # Go to previous step
+                prev_step = step_manager.get_previous_step(current_step_key, config)
+                if prev_step:
+                    current_step_key = prev_step
+                    # Remove any config that depends on the current step
+                    config = _cleanup_step_config(current_step_key, config)
+                else:
+                    return None  # No previous step, exit
+            elif step_result.get('action') == 'exit':
+                return None
+            elif step_result.get('action') == 'restart':
+                # Restart from beginning
+                config.clear()
+                current_step_key = "data_source"
+            elif step_result.get('action') == 'continue':
+                # Update config with step results
+                config.update(step_result.get('data', {}))
+                
+                # Check if this is the final step
+                if current_step_key == "final_review":
+                    # Remove internal tracking data
+                    config.pop('current_step', None)
+                    return config
+                
+                # Move to next step
+                next_step = step_manager.get_next_step(current_step_key, config)
+                if next_step:
+                    current_step_key = next_step
+                else:
+                    # No more steps, go to final review
+                    current_step_key = "final_review"
+                    
+        return config
+        
+    except ImportError:
+        cli.format_warning("Step manager not available, using basic fallback")
+        return _get_input_basic_ui()
+
+
+def _step_data_source(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle data source selection step."""
+    source_options = [
+        "📁 Browse for file - Use file dialog to select data file",
+        "⌨️ Type path manually - Enter file path or URL directly"
+    ]
+    
+    def source_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No source method selected"
+        
+        method_index = selected_indices[0]
+        if method_index == 0:
+            return "File dialog will open to browse for:\n• CSV files (.csv)\n• JSON files (.json)\n• Text files (.txt)"
+        else:
+            return "Manual entry supports:\n• Local file paths\n• URLs (http/https)\n• Relative paths\n\nExample: data.json"
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Choose data source method",
+        source_options,
+        config,
+        preview_func=source_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=False  # First step, no back option
+    )
+    
+    if action_code == -1 or action_type == "exit":
+        return None
+    
+    # Handle data source selection
+    if "Browse for file" in selected_options[0]:
+        file_path = select_file_with_dialog()
+        if not file_path:
+            cli.format_error("No file selected")
+            return {"action": "continue", "data": {}}  # Stay on same step
+    else:
+        file_path = input("\n🔗 Enter file path or URL: ").strip()
+        if not file_path or not validate_data_source(file_path):
+            cli.format_error("Invalid file path or URL")
+            return {"action": "continue", "data": {}}  # Stay on same step
+    
+    return {
+        "action": "continue",
+        "data": {
+            "source": file_path,
+            "source_method": "dialog" if "Browse" in selected_options[0] else "manual"
+        }
+    }
+
+
+def _step_template_selection(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle template selection step."""
+    template_options = [
+        "📄 No template - Generate documents from data directly",
+        "📋 Use template file - Apply custom template to data",
+        "🎨 Browse templates - Select from built-in templates"
+    ]
+    
+    def template_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No template option selected"
+        
+        template_index = selected_indices[0]
+        if template_index == 0:
+            return "Direct generation:\n• Simple data-to-document conversion\n• No custom formatting\n• Fast processing"
+        elif template_index == 1:
+            return "Custom template:\n• Use your own template files\n• Variable substitution\n• Custom formatting"
+        else:
+            return "Built-in templates:\n• Professional layouts\n• Pre-designed formats\n• Industry standards\n\n(Coming soon!)"
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Template options",
+        template_options,
+        config,
+        preview_func=template_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    step_data = {}
+    
+    if "Use template file" in selected_options[0]:
+        template_path = input("\n📁 Enter template file path: ").strip()
+        if template_path and Path(template_path).exists():
+            step_data['template_path'] = template_path
+            cli.format_success(f"Template selected: {template_path}")
+        else:
+            cli.format_warning("Template file not found, continuing without template")
+    elif "Browse templates" in selected_options[0]:
+        cli.format_info("Built-in templates feature coming soon!")
+    
+    return {"action": "continue", "data": step_data}
+
+
+def _step_export_formats(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle export format selection step."""
+    format_options = [
+        "📝 Markdown - Best for notes, documentation, Obsidian",
+        "📄 PDF - Professional documents, reports", 
+        "📊 Word - Editable documents, templates"
+    ]
+    
+    def format_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No formats selected"
+        
+        selected_formats = [format_options[i].split(' - ')[0].split(' ')[1].lower() for i in selected_indices]
+        
+        preview_lines = ["Selected formats:\n"]
+        for fmt in selected_formats:
+            if fmt == "markdown":
+                preview_lines.append("📝 Markdown:")
+                preview_lines.append("  • YAML front matter support")
+                preview_lines.append("  • Perfect for Obsidian")
+                preview_lines.append("  • Plain text format\n")
+            elif fmt == "pdf":
+                preview_lines.append("📄 PDF:")
+                preview_lines.append("  • Professional appearance")
+                preview_lines.append("  • Print-ready format")
+                preview_lines.append("  • Universal compatibility\n")
+            elif fmt == "word":
+                preview_lines.append("📊 Word:")
+                preview_lines.append("  • Editable documents")
+                preview_lines.append("  • Template support")
+                preview_lines.append("  • Rich formatting\n")
+        
+        if len(selected_formats) > 1:
+            preview_lines.append(f"✨ All {len(selected_formats)} formats will be generated")
+        
+        return "".join(preview_lines)
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Choose output formats",
+        format_options,
+        config,
+        preview_func=format_preview_func,
+        allow_multiple=True,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    # Extract format names from selected options
+    export_types = []
+    for option in selected_options:
+        format_name = option.split(' - ')[0].split(' ')[1].lower()
+        export_types.append(format_name)
+    
+    return {
+        "action": "continue",
+        "data": {"export_types": export_types}
+    }
+
+
+def _step_output_directory(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle output directory selection step."""
+    output_options = [
+        "📁 Browse for folder - Use folder dialog",
+        "📂 Current directory - Use current working directory", 
+        "⌨️ Type path manually - Enter custom output path"
+    ]
+    
+    def output_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No output method selected"
+        
+        method_index = selected_indices[0]
+        current_dir = str(Path.cwd())
+        
+        if method_index == 0:
+            return f"Folder dialog will open\nCurrent directory: {current_dir}"
+        elif method_index == 1:
+            export_types = config.get('export_types', ['markdown'])
+            preview_lines = [f"Files will be saved to:\n{current_dir}\n\nExample output files:"]
+            for fmt in export_types:
+                preview_lines.append(f"• document_1.{fmt}")
+                preview_lines.append(f"• document_2.{fmt}")
+            return "\n".join(preview_lines)
+        else:
+            return "Manual path entry\nEnter absolute or relative path\nExample: ./output or C:\\Documents\\Output"
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Choose output location",
+        output_options,
+        config,
+        preview_func=output_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    # Handle output directory selection
+    if "Browse for folder" in selected_options[0]:
+        output_dir = select_folder_with_dialog()
+        if not output_dir:
+            output_dir = str(Path.cwd())
+    elif "Current directory" in selected_options[0]:
+        output_dir = str(Path.cwd())
+    else:
+        output_dir = input("\n📁 Enter output directory: ").strip()
+        if not output_dir:
+            output_dir = str(Path.cwd())
+    
+    return {
+        "action": "continue",
+        "data": {"output_dir": output_dir}
+    }
+
+
+def _step_markdown_config(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle Markdown-specific configuration step."""
+    yaml_options = [
+        "✅ Include YAML front matter - Structured metadata at top",
+        "📝 Include as plain text - Metadata mixed with content",
+        "❌ No metadata - Content only"
+    ]
+    
+    def yaml_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No YAML option selected"
+        
+        yaml_index = selected_indices[0]
+        
+        if yaml_index == 0:  # YAML front matter
+            return """Example with YAML front matter:
+---
+title: Sample Document
+author: John Doe
+tags: [example, test]
+---
+# Document Content
+This is the main content..."""
+        elif yaml_index == 1:  # Plain text
+            return """Example with plain text metadata:
+Title: Sample Document
+Author: John Doe
+Tags: example, test
+
+# Document Content  
+This is the main content..."""
+        else:  # No metadata
+            return """Example content only:
+# Document Content
+This is the main content without any metadata..."""
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "How should metadata be included in Markdown?",
+        yaml_options,
+        config,
+        preview_func=yaml_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    yaml_choice = selected_options[0]
+    step_data = {}
+    
+    if "Include YAML front matter" in yaml_choice:
+        step_data['yaml_front_matter'] = True
+        step_data['yaml_key_selection'] = 'select'  # Will trigger key selection step
+    elif "Include as plain text" in yaml_choice:
+        step_data['yaml_front_matter'] = False
+        step_data['yaml_key_selection'] = 'all'
+    else:  # No metadata
+        step_data['yaml_front_matter'] = False
+        step_data['yaml_key_selection'] = 'none'
+    
+    return {"action": "continue", "data": step_data}
+
+
+def _step_markdown_yaml_keys(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle YAML key selection step."""
+    try:
+        # Load sample data for key selection
+        sample_data_list = load_normalized_data(config['source'])
+        sample_data = sample_data_list[0] if sample_data_list else {}
+        all_keys = list(sample_data.keys()) if sample_data else []
+        
+        # Use the enhanced YAML key selector
+        yaml_result = interactive_yaml_key_selection(sample_data, all_keys)
+        
+        if yaml_result.get('mode') == 'exit':
+            return {"action": "back"}
+        
+        return {"action": "continue", "data": yaml_result}
+        
+    except Exception as e:
+        cli.format_error(f"Error loading sample data: {e}")
+        # Continue with basic configuration
+        return {
+            "action": "continue", 
+            "data": {"yaml_key_selection": "all"}
+        }
+
+
+def _step_pdf_config(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle PDF-specific configuration step."""
+    pdf_options = [
+        "📄 Standard layout - Default PDF formatting",
+        "📊 Report layout - Professional report style",
+        "📋 Letter layout - Business letter format"
+    ]
+    
+    def pdf_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No PDF layout selected"
+        
+        layout_index = selected_indices[0]
+        
+        layouts = [
+            "Standard layout:\n• Simple formatting\n• Basic headers\n• Plain styling",
+            "Report layout:\n• Professional headers\n• Page numbers\n• Corporate styling", 
+            "Letter layout:\n• Business formatting\n• Letterhead space\n• Formal styling"
+        ]
+        
+        return layouts[layout_index]
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Choose PDF layout style",
+        pdf_options,
+        config,
+        preview_func=pdf_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    layout_choice = selected_options[0]
+    pdf_layout = "standard"
+    if "Report layout" in layout_choice:
+        pdf_layout = "report"
+    elif "Letter layout" in layout_choice:
+        pdf_layout = "letter"
+    
+    return {
+        "action": "continue",
+        "data": {"pdf_layout": pdf_layout}
+    }
+
+
+def _step_word_config(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle Word-specific configuration step."""
+    word_options = [
+        "📝 Simple document - Basic Word formatting",
+        "📊 Professional template - Enhanced styling",
+        "🎨 Custom template - Use existing Word template"
+    ]
+    
+    def word_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return "No Word option selected"
+        
+        word_index = selected_indices[0]
+        
+        options = [
+            "Simple document:\n• Basic formatting\n• Default styles\n• Quick generation",
+            "Professional template:\n• Enhanced styling\n• Consistent formatting\n• Corporate appearance",
+            "Custom template:\n• Use your template\n• Variable substitution\n• Custom branding"
+        ]
+        
+        return options[word_index]
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Choose Word document style",
+        word_options,
+        config,
+        preview_func=word_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=True
+    )
+    
+    if action_code == -1:
+        return {"action": "exit" if action_type == "exit" else "back"}
+    
+    word_choice = selected_options[0]
+    step_data = {}
+    
+    if "Professional template" in word_choice:
+        step_data['word_style'] = 'professional'
+    elif "Custom template" in word_choice:
+        step_data['word_style'] = 'custom'
+        template_path = input("\n📁 Enter Word template path (.docx): ").strip()
+        if template_path and Path(template_path).exists():
+            step_data['word_template'] = template_path
+    else:
+        step_data['word_style'] = 'simple'
+    
+    return {"action": "continue", "data": step_data}
+
+
+def _step_template_variables(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle template variable mapping step."""
+    # TODO: Implement template variable mapping
+    cli.format_info("Template variable mapping coming soon!")
+    
+    return {"action": "continue", "data": {}}
+
+
+def _step_final_review(cli, config: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """Handle final configuration review step."""
+    # Generate configuration summary
+    summary_lines = [
+        "📋 Configuration Summary:",
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+        f"📊 Source: {Path(config['source']).name}",
+        f"🎯 Formats: {', '.join(config['export_types'])}",
+        f"📁 Output: {config['output_dir']}"
+    ]
+    
+    if config.get('template_path'):
+        summary_lines.append(f"🎨 Template: {Path(config['template_path']).name}")
+    
+    if 'markdown' in config['export_types']:
+        yaml_mode = config.get('mode', 'all')
+        summary_lines.append(f"📝 YAML: {yaml_mode} mode")
+        if yaml_mode == 'select':
+            summary_lines.append(f"   Selected {len(config.get('selected_keys', []))} keys")
+    
+    if 'pdf' in config['export_types']:
+        pdf_layout = config.get('pdf_layout', 'standard')
+        summary_lines.append(f"📄 PDF: {pdf_layout} layout")
+    
+    if 'word' in config['export_types']:
+        word_style = config.get('word_style', 'simple')
+        summary_lines.append(f"📊 Word: {word_style} style")
+    
+    summary = "\n".join(summary_lines)
+    
+    review_options = [
+        "✅ Continue - Start document generation",
+        "🔄 Restart - Start over with new configuration",
+        "🔙 Back - Modify current settings"
+    ]
+    
+    def review_preview_func(selected_indices: List[int], config: Dict[str, Any]) -> str:
+        if not selected_indices:
+            return summary
+        
+        choice_index = selected_indices[0]
+        if choice_index == 0:
+            return "Ready to generate documents!\nAll files will be created in the output directory."
+        elif choice_index == 1:
+            return "Restart configuration from the beginning.\nAll current settings will be lost."
+        else:
+            return "Go back to modify settings.\nYou can change any previous configuration."
+    
+    action_code, selected_options, action_type = cli.multi_select_step(
+        "Ready to proceed?",
+        review_options,
+        config,
+        preview_func=review_preview_func,
+        allow_multiple=False,
+        required=True,
+        back_option=False  # Back option is built into the choices
+    )
+    
+    if action_code == -1 or action_type == "exit":
+        return {"action": "exit"}
+    
+    choice = selected_options[0]
+    
+    if "Continue" in choice:
+        return {"action": "continue", "data": {}}
+    elif "Restart" in choice:
+        return {"action": "restart"}
+    else:  # Back
+        return {"action": "back"}
+
+
+def _cleanup_step_config(step_key: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    """Clean up configuration when going back to a previous step."""
+    # Define what config keys depend on each step
+    step_dependencies = {
+        "data_source": [],
+        "template_selection": ["template_path"],
+        "export_formats": ["export_types", "markdown_config", "pdf_config", "word_config"],
+        "output_directory": ["output_dir"],
+        "markdown_config": ["yaml_front_matter", "yaml_key_selection", "mode", "selected_keys", "flatten_nested"],
+        "markdown_yaml_keys": ["mode", "selected_keys", "flatten_nested"],
+        "pdf_config": ["pdf_layout"],
+        "word_config": ["word_style", "word_template"],
+        "template_variables": ["template_variables"],
+        "final_review": []
+    }
+    
+    # Remove dependent config when going back
+    cleaned_config = config.copy()
+    keys_to_remove = step_dependencies.get(step_key, [])
+    
+    for key in keys_to_remove:
+        cleaned_config.pop(key, None)
+    
+    return cleaned_config
+
+
+def _get_input_basic_ui() -> Dict[str, Any]:
+    """Fallback basic UI when enhanced features aren't available."""
     config = {}
     current_step = "source_method"
     
@@ -271,6 +1043,8 @@ def get_user_input_with_navigation() -> Dict[str, Any]:
                 current_step = handle_markdown_config(config)
             elif current_step == "complete":
                 break
+            elif current_step == "exit_to_menu":
+                return None
             elif current_step == "restart":
                 config.clear()
                 current_step = "source_method"
@@ -294,15 +1068,16 @@ def handle_source_selection(config: Dict[str, Any]) -> str:
     
     while True:
         try:
-            show_input_help("source_method", options)
-            
             choice = prompt_user_choice(
                 "Choose input method:",
                 options,
                 default="Type file path/URL manually"
             )
             
-            if choice == "Browse for file":
+            if choice == "back":
+                # User wants to go back to main menu
+                return "exit_to_menu"
+            elif choice == "Browse for file":
                 config['source_method'] = 'dialog'
                 return "source_path"
             else:
@@ -412,48 +1187,80 @@ def handle_output_selection(config: Dict[str, Any]) -> str:
     print("="*50)
     
     transaction_id = generate_transaction_id()
-    default_output = get_default_output_directory(transaction_id)
+    default_output = get_default_output_directory()
     
     options = [f"Use default ({default_output})", "Type custom path", "Browse for folder"]
     
     while True:
         try:
-            user_input = input("\nChoose output directory (1/2/3) or 'help'/'back': ").strip()
+            choice = prompt_user_choice(
+                "Choose output directory method:",
+                options,
+                default=options[0]
+            )
             
-            if user_input.lower() == 'help':
-                show_input_help("output_method", options)
-                continue
-            elif user_input.lower() == 'back':
+            if choice == "back":
                 return "export_formats"
-            elif user_input == '1':
-                config['output_dir'] = str(default_output)
-                config['transaction_id'] = transaction_id
-                return "markdown_config" if 'markdown' in config['export_types'] else "complete"
-            elif user_input == '2':
-                custom_path = input("Enter output directory path: ").strip()
-                if custom_path:
-                    config['output_dir'] = custom_path
-                    config['transaction_id'] = transaction_id
-                    return "markdown_config" if 'markdown' in config['export_types'] else "complete"
-                else:
-                    print("❌ Please enter a valid path.")
+            
+            selected_path = None
+            
+            if choice == options[0]:  # Use default
+                selected_path = str(default_output)
+                print(f"Using default directory: {selected_path}")
+                
+            elif choice == options[1]:  # Type custom path
+                while True:
+                    custom_path = input("\nEnter output directory path (or 'back'): ").strip()
+                    if custom_path.lower() == 'back':
+                        break
+                    if custom_path:
+                        selected_path = custom_path
+                        break
+                    else:
+                        print("❌ Please enter a valid path.")
+                
+                if not selected_path:  # User typed 'back'
                     continue
-            elif user_input == '3':
+                    
+            elif choice == options[2]:  # Browse for folder
                 print("\nOpening folder selection dialog...")
-                selected_folder = select_folder_with_dialog("Select Output Folder")
-                if selected_folder:
-                    print(f"✅ Selected folder: {selected_folder}")
-                    config['output_dir'] = selected_folder
-                    config['transaction_id'] = transaction_id
-                    return "markdown_config" if 'markdown' in config['export_types'] else "complete"
-                else:
+                selected_path = select_folder_with_dialog("Select Output Folder")
+                if not selected_path:
                     print("❌ No folder selected.")
                     continue
-            else:
-                print("❌ Please choose 1, 2, or 3.")
-                show_input_help("output_method", options)
-                continue
-                
+            
+            # Validate and confirm the selected path
+            if selected_path:
+                # Normalize the path
+                try:
+                    from pathlib import Path
+                    path_obj = Path(selected_path)
+                    normalized_path = str(path_obj.resolve())
+                    
+                    # Check if path exists or can be created
+                    if path_obj.exists():
+                        if not path_obj.is_dir():
+                            print(f"❌ Error: '{selected_path}' exists but is not a directory.")
+                            continue
+                        status = "✅ Directory exists"
+                    else:
+                        status = "📁 Directory will be created"
+                    
+                    # Show confirmation
+                    print(f"\n{status}")
+                    print(f"Output directory: {normalized_path}")
+                    
+                    if yes_no_prompt("Use this directory?", default=True):
+                        config['output_dir'] = normalized_path
+                        config['transaction_id'] = transaction_id
+                        return "markdown_config" if 'markdown' in config['export_types'] else "complete"
+                    else:
+                        continue
+                        
+                except Exception as e:
+                    print(f"❌ Invalid path: {e}")
+                    continue
+            
         except Exception as e:
             print(f"❌ Error: {e}")
             continue
@@ -468,53 +1275,112 @@ def handle_markdown_config(config: Dict[str, Any]) -> str:
     print("MARKDOWN CONFIGURATION")
     print("="*50)
     
+    print("\n📝 Example Obsidian note with YAML front matter:")
+    print("---")
+    print("title: My Note")
+    print("tags: [work, project]")
+    print("---")
+    print("## Title")
+    print("wow this is a text")
+    print()
+    
+    # Step 1: Content selection
+    content_options = [
+        "Content only (c) - Just the text without metadata",
+        "Metadata only (m) - Just the YAML properties", 
+        "Both (b) - Metadata + content together"
+    ]
+    
     while True:
         try:
-            user_input = input("\nInclude YAML front matter? (y/n) or 'help'/'back': ").strip().lower()
+            choice = prompt_user_choice(
+                "What do you want to include in the output?",
+                content_options,
+                default=content_options[2]
+            )
             
-            if user_input == 'help':
-                show_input_help("yaml_front_matter")
-                continue
-            elif user_input == 'back':
+            if choice == "back":
                 return "output_method"
-            elif user_input in ['y', 'yes', '1']:
+            elif choice == content_options[0]:  # Content only
+                config['include_content'] = 'content'
+                config['yaml_front_matter'] = False
+                return "complete"
+            elif choice == content_options[1]:  # Metadata only
+                config['include_content'] = 'metadata'
                 config['yaml_front_matter'] = True
                 break
-            elif user_input in ['n', 'no', '0']:
-                config['yaml_front_matter'] = False
-                config['yaml_key_selection'] = 'none'
-                return "complete"
-            else:
-                print("❌ Please enter 'y' for yes or 'n' for no.")
-                continue
+            elif choice == content_options[2]:  # Both
+                config['include_content'] = 'both'
+                break
                 
         except Exception as e:
             print(f"❌ Error: {e}")
             continue
     
-    # YAML key selection
-    if config['yaml_front_matter']:
-        options = ["All keys", "Select specific keys"]
+    # Step 2: YAML front matter configuration (only if including metadata)
+    if config['include_content'] in ['metadata', 'both']:
+        yaml_options = [
+            "Include YAML front matter - Structured metadata at top",
+            "Include as plain text - Metadata mixed with content"
+        ]
         
         while True:
             try:
-                user_input = input("\nYAML front matter keys (1/2) or 'help'/'back': ").strip()
+                choice = prompt_user_choice(
+                    "How should metadata be included?",
+                    yaml_options,
+                    default=yaml_options[0]
+                )
                 
-                if user_input == 'help':
-                    show_input_help("yaml_keys", options)
-                    continue
-                elif user_input == 'back':
-                    continue  # Go back to YAML front matter question
-                elif user_input == '1':
+                if choice == "back":
+                    continue  # Go back to content selection
+                elif choice == yaml_options[0]:  # YAML front matter
+                    config['yaml_front_matter'] = True
+                    break
+                elif choice == yaml_options[1]:  # Plain text
+                    config['yaml_front_matter'] = False
                     config['yaml_key_selection'] = 'all'
                     return "complete"
-                elif user_input == '2':
-                    config['yaml_key_selection'] = 'select'
+                    
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                continue
+    
+    # Step 3: YAML key selection (only if using YAML front matter)
+    if config.get('yaml_front_matter', False):
+        print("\n🔧 For nested objects like:")
+        print("user:")
+        print("  name: John")
+        print("  age: 30")
+        
+        key_options = [
+            "Include all keys - Everything in YAML front matter",
+            "Select specific keys - Choose which properties to include",
+            "Flatten nested objects - Convert nested data to simple keys"
+        ]
+        
+        while True:
+            try:
+                choice = prompt_user_choice(
+                    "How should YAML keys be handled?",
+                    key_options,
+                    default=key_options[0]
+                )
+                
+                if choice == "back":
+                    continue  # Go back to YAML format question
+                elif choice == key_options[0]:  # All keys
+                    config['yaml_key_selection'] = 'all'
+                    config['flatten_nested'] = False
                     return "complete"
-                else:
-                    print("❌ Please choose 1 or 2.")
-                    show_input_help("yaml_keys", options)
-                    continue
+                elif choice == key_options[1]:  # Select specific
+                    config['yaml_key_selection'] = 'select'
+                    config['flatten_nested'] = False
+                    return "complete"
+                elif choice == key_options[2]:  # Flatten nested
+                    config['yaml_key_selection'] = 'all'
+                    config['flatten_nested'] = True
+                    return "complete"
                     
             except Exception as e:
                 print(f"❌ Error: {e}")
@@ -659,18 +1525,31 @@ def execute_exports(config: Dict[str, Any], data_list: List[Dict[str, Any]]) -> 
             print(f"\n📄 Exporting to {export_type.upper()}...")
             
             if export_type == 'markdown':
-                # Handle YAML key selection for Markdown
-                selected_yaml_keys = None
-                if config.get('yaml_key_selection') == 'select':
-                    selected_yaml_keys = interactive_yaml_key_selection(data_list)
+                # Handle new YAML configuration structure
+                yaml_settings = {}
+                
+                # Map new config structure to export parameters
+                mode = config.get('mode', 'all')
+                selected_keys = config.get('selected_keys', [])
+                flatten_nested = config.get('flatten_nested', False)
+                
+                if mode == 'none':
+                    yaml_settings['include_yaml_front_matter'] = False
+                elif mode == 'select' and selected_keys:
+                    yaml_settings['include_yaml_front_matter'] = True
+                    yaml_settings['selected_yaml_keys'] = selected_keys
+                elif mode == 'flatten':
+                    yaml_settings['include_yaml_front_matter'] = True
+                    yaml_settings['flatten_nested'] = True
+                else:  # mode == 'all' or fallback
+                    yaml_settings['include_yaml_front_matter'] = True
                 
                 files = export_to_markdown(
                     data_list,
                     config['output_dir'],
                     filename_key=config.get('filename_key'),
-                    include_yaml_front_matter=config.get('yaml_front_matter', True),
-                    selected_yaml_keys=selected_yaml_keys,
-                    transaction_id=config.get('transaction_id')
+                    transaction_id=config.get('transaction_id'),
+                    **yaml_settings
                 )
                 
             elif export_type == 'pdf':
@@ -823,6 +1702,11 @@ Examples:
             
             while True:
                 config = get_user_input_with_navigation()
+                
+                # Check if user wants to exit to main menu
+                if config is None:
+                    print("🔙 Returning to main menu...")
+                    return  # Return to main menu
                 
                 # Load and normalize data
                 print(f"\n📊 Loading data from: {config['source']}")

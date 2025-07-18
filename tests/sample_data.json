@@ -1,0 +1,22 @@
+[
+  {
+    "title": "Sample Note 1",
+    "tags": ["work", "project"],
+    "author": "John Doe",
+    "content": "This is the content of the first note.",
+    "metadata": {
+      "created": "2025-01-01",
+      "priority": "high"
+    }
+  },
+  {
+    "title": "Sample Note 2", 
+    "tags": ["personal"],
+    "author": "Jane Smith",
+    "content": "This is another sample note with different content.",
+    "metadata": {
+      "created": "2025-01-02",
+      "priority": "low"
+    }
+  }
+]

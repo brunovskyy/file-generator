@@ -26,7 +26,7 @@ If you see "Windows protected your PC":
 2. Click **"Run anyway"**
 
 ## Why This Happens
-- The EXE is not digitally signed (costs $300+/year)
+- The EXE is not digitally signed
 - Windows treats all unsigned downloads as potentially unsafe
 - This is normal for indie/open-source software
 

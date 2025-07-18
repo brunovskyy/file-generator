@@ -35,6 +35,15 @@ docx2pdf>=0.1.8
 # Enhanced CLI features - colored output and better formatting
 colorama>=0.4.6
 
+# Professional CLI navigation - arrow key selection menus
+inquirer>=3.1.3
+
+# Alternative CLI library for menus and selection
+pick>=2.2.0
+
+# Rich text and formatting for beautiful CLI output
+rich>=13.4.2
+
 # EXE Generation - for creating standalone executables
 pyinstaller>=5.13.0
 

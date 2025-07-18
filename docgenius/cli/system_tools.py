@@ -15,13 +15,41 @@ try:
     from ..logic.utilities import MessageDialogs
     
     # Backward compatibility functions
-    def yes_no_prompt(message: str) -> bool:
+    def yes_no_prompt(message: str, default: bool = True) -> bool:
         """Yes/no prompt using new dialog utilities."""
-        return MessageDialogs.show_yes_no("Confirm", message)
+        dialogs = MessageDialogs()
+        result = dialogs.confirm("Confirm", message)
+        return result.value if result.success else default
     
-    def prompt_user_choice(message: str, choices: list) -> str:
+    def prompt_user_choice(message: str, choices: list, default: str = None) -> str:
         """Prompt user for choice."""
-        return MessageDialogs.show_choice("Select Option", message, choices)
+        print(f"\n{message}")
+        for i, choice in enumerate(choices, 1):
+            marker = " (default)" if choice == default else ""
+            print(f"{i}. {choice}{marker}")
+        
+        while True:
+            try:
+                user_input = input(f"\nChoose 1-{len(choices)} (or 'help'/'back'): ").strip()
+                
+                if user_input.lower() == 'help':
+                    print("Valid commands:")
+                    print(f"- Type a number (1-{len(choices)}) to select an option")
+                    print("- Type 'help' to see this message")
+                    print("- Type 'back' to return to previous step")
+                    continue
+                elif user_input.lower() == 'back':
+                    return "back"
+                
+                choice_index = int(user_input) - 1
+                if 0 <= choice_index < len(choices):
+                    return choices[choice_index]
+                else:
+                    print(f"❌ Invalid option. Please choose 1-{len(choices)}.")
+            except ValueError:
+                print(f"❌ Please enter a number (1-{len(choices)}) or 'help'/'back'.")
+            except KeyboardInterrupt:
+                return "back"
 except ImportError:
     # Fallback implementations if utils not available
     def yes_no_prompt(prompt: str, default: bool = True) -> bool:

@@ -33,7 +33,7 @@ try:
         )
         return logger
     
-    def yes_no_prompt(message: str) -> bool:
+    def yes_no_prompt(message: str, default: bool = True) -> bool:
         """Yes/no prompt using new dialog utilities."""
         return MessageDialogs.show_yes_no("Confirm", message)
 except ImportError as e:
@@ -68,7 +68,23 @@ class DocGeniusApp:
     def __init__(self):
         self.dev_tools = DevToolsInterface()
         self.system_tools = SystemToolsInterface()
+        self.pending_errors = []  # Buffer for error messages
         setup_logging("INFO")
+    
+    def add_error(self, error_msg: str):
+        """Add error to buffer for later display."""
+        self.pending_errors.append(error_msg)
+    
+    def display_pending_errors(self):
+        """Display all buffered errors and clear the buffer."""
+        if self.pending_errors:
+            print("\n" + "="*50)
+            print("⚠️ Errors occurred:")
+            for error in self.pending_errors:
+                print(f"❌ {error}")
+            self.pending_errors.clear()
+            print("="*50)
+            input("Press Enter to continue...")
     
     def show_banner(self):
         """Display application banner."""
@@ -106,31 +122,27 @@ class DocGeniusApp:
         except KeyboardInterrupt:
             print("\n⚠️ Document creation cancelled.")
         except Exception as e:
-            print(f"❌ Error in document creator: {e}")
-            if yes_no_prompt("Return to main menu?", default=True):
-                return
-            else:
-                sys.exit(1)
+            self.add_error(f"Error in document creator: {e}")
     
     def run_dev_tools(self):
         """Run developer tools interface."""
         try:
             print("\n🔧 Launching Developer Tools...")
-            self.dev_tools_cli.run()
+            self.dev_tools.run()
         except KeyboardInterrupt:
             print("\n⚠️ Developer tools cancelled.")
         except Exception as e:
-            print(f"❌ Error in developer tools: {e}")
+            self.add_error(f"Error in developer tools: {e}")
     
     def run_system_tools(self):
         """Run system tools interface."""
         try:
             print("\n⚙️ Launching System Tools...")
-            self.system_tools_cli.run()
+            self.system_tools.run()
         except KeyboardInterrupt:
             print("\n⚠️ System tools cancelled.")
         except Exception as e:
-            print(f"❌ Error in system tools: {e}")
+            self.add_error(f"Error in system tools: {e}")
     
     def run(self):
         """Main application loop."""
@@ -149,13 +161,17 @@ class DocGeniusApp:
                 elif choice == '4':
                     print("\n👋 Thank you for using DocGenius!")
                     break
+                
+                # Display any errors that occurred after menu interaction
+                self.display_pending_errors()
                     
             except KeyboardInterrupt:
                 if yes_no_prompt("\n⚠️ Do you want to exit DocGenius?", default=False):
                     break
                 continue
             except Exception as e:
-                print(f"❌ Unexpected error: {e}")
+                self.add_error(f"Unexpected error: {e}")
+                self.display_pending_errors()
                 if not yes_no_prompt("Continue running?", default=True):
                     break
 
@@ -166,7 +182,9 @@ def main():
         app = DocGeniusApp()
         app.run()
     except Exception as e:
-        print(f"❌ Fatal error: {e}")
+        print(f"\n❌ Fatal error: {e}")
+        print("💡 Please report this issue if it persists.")
+        input("Press Enter to exit...")
         sys.exit(1)
 
 

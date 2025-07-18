@@ -1,0 +1,53 @@
+[
+  {
+    "id": 1,
+    "title": "Building Modern CLIs",
+    "author": "John Developer",
+    "content": "This document covers best practices for building command line interfaces with arrow key navigation and rich formatting.",
+    "category": "Development",
+    "tags": ["CLI", "Python", "UX"],
+    "metadata": {
+      "created_date": "2025-01-17",
+      "status": "published",
+      "priority": "high"
+    },
+    "stats": {
+      "word_count": 1500,
+      "reading_time": "5 mins"
+    }
+  },
+  {
+    "id": 2,
+    "title": "YAML Front Matter Guide",
+    "author": "Sarah Writer",
+    "content": "A comprehensive guide to using YAML front matter in Markdown documents for better organization and metadata management.",
+    "category": "Documentation", 
+    "tags": ["YAML", "Markdown", "Documentation"],
+    "metadata": {
+      "created_date": "2025-01-16",
+      "status": "draft",
+      "priority": "medium"
+    },
+    "stats": {
+      "word_count": 2000,
+      "reading_time": "7 mins"
+    }
+  },
+  {
+    "id": 3,
+    "title": "Obsidian Integration Patterns",
+    "author": "Mike Knowledge",
+    "content": "Learn how to integrate DocGenius with Obsidian for automated note generation and knowledge graph building.",
+    "category": "Integration",
+    "tags": ["Obsidian", "Knowledge Management", "Automation"],
+    "metadata": {
+      "created_date": "2025-01-15", 
+      "status": "published",
+      "priority": "high"
+    },
+    "stats": {
+      "word_count": 1200,
+      "reading_time": "4 mins"
+    }
+  }
+]
